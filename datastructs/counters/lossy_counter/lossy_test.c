@@ -24,12 +24,24 @@
         http://www.gnu.org/software/libc/manual/html_node/Handler-Returns.html#Handler-Returns
 ****************************************/
 
+#define ZIPF_MAP_SIZE 100000
+
 int _running = 1;
+int zipf_map[ZIPF_MAP_SIZE];
 
 void timeout(int sig) {
         _running = 0;
         signal(sig, timeout);
 }
+
+void init_zipfmap(double alpha, int N) {
+	int i;
+	
+	srand(time(NULL));
+	for (i = 0; i < ZIPF_MAP_SIZE; i++) {
+		zipf_map[i]= get_zipf_key(alpha, N);
+	}
+};
 
 //show result and free memory
 void show_result(Counter *result) {
@@ -72,7 +84,7 @@ void counter_test(char *lossy_phi, char *zipf_N, char *zipf_alpha,
         T = atoi(runs);
         L = atoll(loops);
         if (L > 0) T = 0;
-        
+	init_zipfmap(alpha, N);
         if (T > 0) {
                 signal(SIGALRM, timeout);
                 toset.it_interval.tv_usec = 0;
@@ -86,7 +98,7 @@ void counter_test(char *lossy_phi, char *zipf_N, char *zipf_alpha,
 
         while(_running == 1) {
                 count++;
-                key = get_zipf_key(alpha, N); 
+		key = zipf_map[count % ZIPF_MAP_SIZE]; 
                 LC_Update(lcounter, key);
                 if (R > 0 && count % R == 0) {
                         if (result != NULL) {
